@@ -8,8 +8,8 @@
 
 void main_test(){
     //lex_test();
-    //json_print_test();
-    json_parse_test();
+    json_print_test();
+    //json_parse_test();
 }
 
 int main() {

@@ -43,7 +43,7 @@ JsonValue* json_value_array(JsonValue** values, size_t count){
     JsonValue* val = arena_alloc(&JSON_arena, sizeof(JsonValue));
     val->type = JSON_array;
     val->array.values = NULL;
-    val->array.len = count;
+    val->array.len = 0;
     for (JsonValue** value = values; value != values + count;value++){
         json_array_push(&val->array,*value);
     }

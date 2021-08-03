@@ -5,6 +5,7 @@ void print_newline(void) {
 }
 
 void json_print_object(JsonObject* object);
+char* json_stringify_object(BUF(char* buffer),JsonObject* object);
 
 void json_print_value(JsonValue* value){
     assert(value);
@@ -65,7 +66,66 @@ void json_print_object(JsonObject* object){
     }
     printf("}");
 }
+#define json_printf json_print_object
 
+char* json_stringify_value(char* buffer, JsonValue* value){
+    assert(value);
+    switch (value->type) {
+        case JSON_number:
+            buf_printf(buffer,"%f",value->number);
+            break;
+        case JSON_string:
+            buf_printf(buffer,"\"%s\"",value->string.str);
+            break;
+        case JSON_array:
+            buf_printf(buffer,"[");
+            if(value->array.len){
+                for (JsonValue** it = value->array.values; it != value->array.values + (value->array.len - 1); it++){
+                    buffer = json_stringify_value(buffer,*it);
+                    buf_printf(buffer,",");
+                }
+                buffer = json_stringify_value(buffer,value->array.values[value->array.len - 1]);
+            }
+            buf_printf(buffer,"]");
+            break;
+        case JSON_bool:
+            if (value->boolean){
+                buf_printf(buffer,"true");
+            }else{
+                buf_printf(buffer,"false");
+            }
+            break;
+        case JSON_null:
+            buf_printf(buffer,"null");
+            break;
+        case JSON_object:
+            buffer = json_stringify_object(buffer,value->object);
+            break;
+    }
+    return buffer;
+}
+
+char* json_stringify_field(char* buffer,JsonField* field){
+    assert(field);
+    buf_printf(buffer,"\"%s\":",field->key);
+    return json_stringify_value(buffer,field->value);
+}
+
+char* json_stringify_object(BUF(char* buffer),JsonObject* object){
+    assert(object);
+    buf_printf(buffer,"{");
+    if (object->fields_count){
+        for (JsonField** field = object->fields; field != object->fields + (object->fields_count-1); field++){
+            buffer = json_stringify_field(buffer,*field);
+            buf_printf(buffer,",");
+        }
+        buffer = json_stringify_field(buffer,object->fields[object->fields_count-1]);
+    }
+    buf_printf(buffer,"}");
+    return buffer;
+}
+
+#define json_stringify(object) json_stringify_object(NULL,object)
 
 void json_print_test(){
     JsonObject* obj = json_object((JsonField*[]){
@@ -81,7 +141,7 @@ void json_print_test(){
                 json_field("Boolean", json_value_boolean(false))
                 },3)))
         },6);
-    json_print_object(obj);
+    json_printf(obj);
 
     json_get_field(obj,"String")->value->string = json_string("world");
     json_get_field(json_get_field(obj,"Child-Object")->value->object,"Number")->value->number = 321;
@@ -89,6 +149,10 @@ void json_print_test(){
     json_put_field(obj,json_field("Empty-Array", json_value_array(NULL, 0)));
     printf("\n\n");
     json_print_object(obj);
+
+    char* obj_str = json_stringify(obj);
+    printf("\n\n%s",obj_str);
+    buf_free(obj_str);
 
     free_json_data();
 }

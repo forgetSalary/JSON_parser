@@ -162,7 +162,7 @@ void arena_free(Arena *arena) {
     }
 }
 
-const char* arena_strdup(Arena* arena,const char* src, size_t length){
+char* arena_strdup(Arena* arena,const char* src, size_t length){
     char* dup = arena_alloc(arena,length+1);
     strncpy(dup,src,length);
     dup[length] = '\0';
@@ -283,18 +283,6 @@ void *map_get(Map *map, void *key) {
     return map_get_hashed(map, key, ptr_hash(key));
 }
 
-void map_test(void) {
-    Map map = {0};
-    enum { N = 1024 };
-    for (size_t i = 1; i < N; i++) {
-        map_put(&map, (void *)i, (void *)(i+1));
-    }
-    for (size_t i = 1; i < N; i++) {
-        void *val = map_get(&map, (void *)i);
-        assert(val == (void *)(i+1));
-    }
-}
-
 typedef struct Intern {
     struct Intern* next;
     int len;
@@ -303,6 +291,7 @@ typedef struct Intern {
 
 Arena str_arena;
 Map interns;
+
 const char *str_intern_range(const char *start, const char *end) {
     size_t len = end - start;
     uint64_t hash = str_hash(start, len);

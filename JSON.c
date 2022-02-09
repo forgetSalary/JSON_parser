@@ -9,19 +9,26 @@ void free_json_data(){
     arena_free(&JSON_arena);
 }
 
-inline JsonString json_string(const char* str){
-    return (JsonString){str,strlen(str)};
-}
-
 void json_array_push(JsonArray* array, JsonValue* value){
     buf_push(array->values, value);
     array->len ++;
 }
 
-JsonValue* json_value_number(double val){
+void* json_alloc(size_t size){
+    return arena_alloc(&JSON_arena,size);
+}
+
+JsonValue* json_value_number_float(double val){
     JsonValue* value = arena_alloc(&JSON_arena, sizeof(JsonValue));
-    value->type = JSON_number;
-    value->number = val;
+    value->type = JSON_number_float;
+    value->float_number = val;
+    return value;
+}
+
+JsonValue* json_value_number_int(int val){
+    JsonValue* value = arena_alloc(&JSON_arena, sizeof(JsonValue));
+    value->type = JSON_number_int;
+    value->int_number = val;
     return value;
 }
 
@@ -103,4 +110,39 @@ JsonField* json_get_field(JsonObject* obj,const char* key){
         }
     }
     return NULL;
+}
+
+void json_free_object(JsonObject* obj);
+static void json_free_array(JsonArray array);
+
+static void json_free_value(JsonValue* value){
+    switch (value->type) {
+        case JSON_object:
+            json_free_object(value->object);
+            break;
+        case JSON_array:
+            json_free_array(value->array);
+            break;
+        default:
+            break;
+    }
+}
+
+static void json_free_array(JsonArray array){
+    for (JsonValue** val = array.values; val != buf_end(array.values); val++){
+        json_free_value(*val);
+    }
+    buf_free(array.values);
+}
+
+static void json_free_field(JsonField* field){
+    json_free_value(field->value);
+}
+
+void json_free_object(JsonObject* obj){
+    for (JsonField** field = obj->fields; field != buf_end(obj->fields); field++){
+        json_free_field(*field);
+    }
+    buf_free(obj->fields);
+    free(obj->fields_map->entries);
 }

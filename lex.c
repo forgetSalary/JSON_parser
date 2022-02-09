@@ -6,27 +6,7 @@ const char *first_keyword;
 const char *last_keyword;
 const char **keywords;
 
-#define KEYWORD(name) name##_keyword = str_intern(#name); buf_push(keywords, name##_keyword)
 
-void init_keywords() {
-    static bool inited;
-    if (inited) {
-        return;
-    }
-    char *arena_end = str_arena.end;
-    KEYWORD(false);
-    KEYWORD(true);
-    KEYWORD(null);
-    first_keyword = false_keyword;
-    last_keyword = null_keyword;
-    inited = true;
-}
-
-#undef KEYWORD
-
-bool is_keyword_str(const char *str) {
-    return first_keyword <= str && str <= last_keyword;
-}
 
 typedef enum TokenKind {
     TOKEN_EOF,
@@ -58,6 +38,31 @@ typedef struct Token {
         const char* name;
     };
 } Token;
+
+
+
+#define KEYWORD(name) name##_keyword = str_intern(#name); buf_push(keywords, name##_keyword)
+
+void init_keywords() {
+    static bool inited;
+    if (inited) {
+        return;
+    }
+    char *arena_end = str_arena.end;
+    KEYWORD(false);
+    KEYWORD(true);
+    KEYWORD(null);
+    first_keyword = false_keyword;
+    last_keyword = null_keyword;
+    inited = true;
+}
+
+#undef KEYWORD
+
+bool is_keyword_str(const char *str) {
+    return first_keyword <= str && str <= last_keyword;
+}
+
 
 Token token;
 const char *stream;
@@ -332,14 +337,5 @@ inline bool expect_token(TokenKind kind){
     } else{
         fatal("expected token %s, got %s",token_kind_name(token.kind)),token_kind_name(token.kind);
         return false;
-    }
-}
-
-void lex_test(){
-    init_keywords();
-    init_stream(read_file("./home.json"));
-    while(token.kind!=TOKEN_EOF){
-        print_token(token);
-        next_token();
     }
 }

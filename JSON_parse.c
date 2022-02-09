@@ -1,16 +1,17 @@
-JsonObject* json_parse_object();
 
-JsonValue* json_parse_value(){
+static JsonObject* json_parse_object();
+
+static JsonValue* json_parse_value(){
     JsonValue* new_value = NULL;
     switch (token.kind) {
         case TOKEN_STR:
             new_value = json_value_string((JsonString){token.str_val,buf_len(token.str_val)});
             break;
         case TOKEN_INT:
-            new_value = json_value_number(token.int_val);
+            new_value = json_value_number_int(token.int_val);
             break;
         case TOKEN_FLOAT:
-            new_value = json_value_number(token.float_val);
+            new_value = json_value_number_float(token.float_val);
             break;
         case TOKEN_NAME:
             if (is_keyword_str(token.name)){
@@ -52,7 +53,7 @@ JsonValue* json_parse_value(){
     return new_value;
 }
 
-JsonField* json_parse_field(){
+static JsonField* json_parse_field(){
     const char* key = token.str_val;
     next_token();
     if(expect_token(':')){
@@ -62,7 +63,7 @@ JsonField* json_parse_field(){
     }
 }
 
-JsonObject* json_parse_object(){
+static JsonObject* json_parse_object(){
     JsonObject* object = json_object(NULL,0);
     while (1){
         if (is_token(TOKEN_STR)){
@@ -87,16 +88,5 @@ JsonObject* json_parse(char* str){
     }
     arena_free(&str_arena);
     free(interns.entries);
-    free(str);
     return NULL;
-}
-
-void json_parse_test(){
-    JsonObject* obj1 = json_parse("{}");
-    JsonObject* obj2 = json_parse(read_file("./test.json"));
-
-    json_print_object(obj1);
-    printf("\n\n");
-    json_print_object(obj2);
-
 }
